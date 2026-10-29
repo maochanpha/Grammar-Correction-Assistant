@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String            @id @default(cuid())
+  name         String?
+  email        String            @unique
+  passwordHash String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  documents    Document[]
+  sessions     CorrectionSession[]
+  preferences  UserPreferences?
+  usageRecords UsageRecord[]
+}
+
+model Document {
+  id                 String              @id @default(cuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title              String              @default("Untitled Document")
+  originalText       String
+  currentText        String
+  language           String              @default("en-US")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  correctionSessions CorrectionSession[]
+
+  @@index([userId])
+}
+
+model CorrectionSession {
+  id               String                 @id @default(cuid())
+  documentId       String?
+  document         Document?              @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  userId           String?
+  user             User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  writingMode      String                 @default("grammar_fix")
+  language         String                 @default("en-US")
+  originalText     String
+  correctedText    String
+  explanationLevel String                 @default("simple")
+  suggestions      CorrectionSuggestion[]
+  createdAt        DateTime               @default(now())
+
+  @@index([userId])
+  @@index([documentId])
+}
+
+model CorrectionSuggestion {
+  id                String            @id @default(cuid())
+  sessionId         String
+  session           CorrectionSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  category          String            // "grammar" | "spelling" | "punctuation" | "clarity" | "style"
+  originalPhrase    String
+  replacementPhrase String
+  explanation       String
+  startIndex        Int
+  endIndex          Int
+  status            String            @default("pending") // "pending" | "accepted" | "dismissed"
+  createdAt         DateTime          @default(now())
+
+  @@index([sessionId])
+}
+
+model UserPreferences {
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredEnglishVariant String   @default("en-US")
+  preferredWritingMode    String   @default("grammar_fix")
+  explanationLevel        String   @default("simple")
+  theme                   String   @default("system")
+  autoSave                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model UsageRecord {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestIp     String?
+  requestType String   // "grammar_correct" | "rewrite" | "chat"
+  wordCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}

@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-elevated: #ffffff;
+    --foreground: #0f172a;
+    --foreground-muted: #64748b;
+    --border: #e2e8f0;
+    --border-subtle: #f1f5f9;
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-light: #eef2ff;
+    --accent: #7c3aed;
+    --accent-light: #f5f3ff;
+    
+    /* Error Category Highlights */
+    --cat-grammar-bg: #fee2e2;
+    --cat-grammar-border: #f87171;
+    --cat-grammar-text: #b91c1c;
+
+    --cat-spelling-bg: #fef3c7;
+    --cat-spelling-border: #fbbf24;
+    --cat-spelling-text: #b45309;
+
+    --cat-punctuation-bg: #e0f2fe;
+    --cat-punctuation-border: #38bdf8;
+    --cat-punctuation-text: #0369a1;
+
+    --cat-clarity-bg: #ede9fe;
+    --cat-clarity-border: #a78bfa;
+    --cat-clarity-text: #6d28d9;
+
+    --cat-style-bg: #d1fae5;
+    --cat-style-border: #34d399;
+    --cat-style-text: #047857;
+  }
+
+  .dark {
+    --background: #090d16;
+    --surface: #111827;
+    --surface-elevated: #1f2937;
+    --foreground: #f8fafc;
+    --foreground-muted: #94a3b8;
+    --border: #1f293d;
+    --border-subtle: #162032;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-light: #1e1b4b;
+    --accent: #8b5cf6;
+    --accent-light: #2e1065;
+
+    /* Dark Mode Category Highlights */
+    --cat-grammar-bg: #450a0a;
+    --cat-grammar-border: #991b1b;
+    --cat-grammar-text: #fca5a5;
+
+    --cat-spelling-bg: #451a03;
+    --cat-spelling-border: #92400e;
+    --cat-spelling-text: #fde68a;
+
+    --cat-punctuation-bg: #082f49;
+    --cat-punctuation-border: #0369a1;
+    --cat-punctuation-text: #7dd3fc;
+
+    --cat-clarity-bg: #2e1065;
+    --cat-clarity-border: #5b21b6;
+    --cat-clarity-text: #c4b5fd;
+
+    --cat-style-bg: #064e3b;
+    --cat-style-border: #065f46;
+    --cat-style-text: #6ee7b7;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Highlighting styles */
+.highlight-grammar {
+  background-color: var(--cat-grammar-bg);
+  border-bottom: 2px solid var(--cat-grammar-border);
+  color: var(--cat-grammar-text);
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: opacity 0.15s ease;
+}
+
+.highlight-spelling {
+  background-color: var(--cat-spelling-bg);
+  border-bottom: 2px solid var(--cat-spelling-border);
+  color: var(--cat-spelling-text);
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: opacity 0.15s ease;
+}
+
+.highlight-punctuation {
+  background-color: var(--cat-punctuation-bg);
+  border-bottom: 2px solid var(--cat-punctuation-border);
+  color: var(--cat-punctuation-text);
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: opacity 0.15s ease;
+}
+
+.highlight-clarity {
+  background-color: var(--cat-clarity-bg);
+  border-bottom: 2px solid var(--cat-clarity-border);
+  color: var(--cat-clarity-text);
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: opacity 0.15s ease;
+}
+
+.highlight-style {
+  background-color: var(--cat-style-bg);
+  border-bottom: 2px solid var(--cat-style-border);
+  color: var(--cat-style-text);
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: opacity 0.15s ease;
+}
+
+.highlight-grammar:hover,
+.highlight-spelling:hover,
+.highlight-punctuation:hover,
+.highlight-clarity:hover,
+.highlight-style:hover {
+  filter: brightness(0.95);
+}
