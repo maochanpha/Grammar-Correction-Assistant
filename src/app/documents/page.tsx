@@ -12,7 +12,6 @@ import {
   Calendar,
   FileText,
   RefreshCw,
-  ExternalLink,
   Check,
   X,
   Lock,

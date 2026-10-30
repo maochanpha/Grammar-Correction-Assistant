@@ -11,7 +11,6 @@ import {
   Sun,
   Moon,
   LogOut,
-  User as UserIcon,
   Menu,
   X,
   FileEdit,
