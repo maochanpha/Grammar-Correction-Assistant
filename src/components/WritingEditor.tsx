@@ -2,22 +2,21 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Sparkles,
   Check,
   Copy,
   RotateCcw,
+  RotateCw,
   Trash2,
   Clipboard,
-  FileCheck,
   Save,
   MessageSquare,
   Activity,
-  Layers,
-  ArrowRightLeft,
   RefreshCw,
   AlertCircle,
   CheckCheck,
-  RotateCw,
+  ArrowRightLeft,
+  Sparkles,
+  SlidersHorizontal,
 } from 'lucide-react';
 import {
   WritingMode,
@@ -34,6 +33,7 @@ import SentenceRewriterModal from './SentenceRewriterModal';
 import WritingInsightsPanel from './WritingInsightsPanel';
 import AskAIChatDrawer from './AskAIChatDrawer';
 import DiffViewer from './DiffViewer';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 
 interface WritingEditorProps {
@@ -52,7 +52,6 @@ export default function WritingEditor({
 }: WritingEditorProps) {
   const { user } = useAuth();
 
-  // State
   const [docId, setDocId] = useState<string | undefined>(propDocId);
   const [title, setTitle] = useState(initialTitle);
   const [text, setText] = useState(initialText);
@@ -72,14 +71,12 @@ export default function WritingEditor({
   const [copied, setCopied] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
 
-  // Modals & Drawers
   const [rewriteModalOpen, setRewriteModalOpen] = useState(false);
   const [selectedForRewrite, setSelectedForRewrite] = useState('');
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Sync user preferences if loaded
   useEffect(() => {
     if (user?.preferences) {
       if (user.preferences.preferredWritingMode) {
@@ -94,14 +91,12 @@ export default function WritingEditor({
     }
   }, [user]);
 
-  // Real-time quick stats on input
   const words = getWords(text);
   const sentences = getSentences(text);
   const wordCount = words.length;
   const charCount = text.length;
   const sentenceCount = sentences.length;
 
-  // History tracking for undo/redo
   const updateTextWithHistory = (newText: string) => {
     setText(newText);
     setSaveStatus('unsaved');
@@ -137,8 +132,15 @@ export default function WritingEditor({
         updateTextWithHistory(clipText);
       }
     } catch {
-      // Fallback
       textareaRef.current?.focus();
+    }
+  };
+
+  const handleCopyText = () => {
+    if (text) {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -146,7 +148,6 @@ export default function WritingEditor({
     updateTextWithHistory(SAMPLE_TEXT);
   };
 
-  // Run Grammar Correction API
   const handleCorrect = async () => {
     if (!text.trim() || loading) return;
     setLoading(true);
@@ -180,7 +181,6 @@ export default function WritingEditor({
     }
   };
 
-  // Keyboard shortcut Ctrl+Enter or Cmd+Enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
@@ -188,7 +188,6 @@ export default function WritingEditor({
     }
   };
 
-  // Accept Individual Suggestion
   const handleAcceptSuggestion = (suggestion: CorrectionSuggestion) => {
     if (!result) return;
     const { updatedText, remainingSuggestions } = applySuggestion(
@@ -208,26 +207,38 @@ export default function WritingEditor({
     ).length;
 
     const newInsights = analyzeWritingQuality(updatedText, grammarCount, clarityCount, styleCount);
+    const fullyCorrected =
+      remainingSuggestions.length > 0
+        ? applyAllSuggestions(updatedText, remainingSuggestions)
+        : updatedText;
 
     setResult({
       ...result,
-      correctedText: updatedText,
+      correctedText: fullyCorrected,
       suggestions: remainingSuggestions,
       qualityInsights: newInsights,
     });
   };
 
-  // Dismiss Individual Suggestion
   const handleDismissSuggestion = (suggestion: CorrectionSuggestion) => {
     if (!result) return;
     const remaining = result.suggestions.filter((s) => s.id !== suggestion.id);
+    const grammarCount = remaining.filter(
+      (s) => s.category === 'grammar' || s.category === 'spelling'
+    ).length;
+    const clarityCount = remaining.filter((s) => s.category === 'clarity').length;
+    const styleCount = remaining.filter(
+      (s) => s.category === 'style' || s.category === 'punctuation'
+    ).length;
+
+    const newInsights = analyzeWritingQuality(text, grammarCount, clarityCount, styleCount);
     setResult({
       ...result,
       suggestions: remaining,
+      qualityInsights: newInsights,
     });
   };
 
-  // Accept All Suggestions
   const handleAcceptAll = () => {
     if (!result || result.suggestions.length === 0) return;
     const fullyUpdatedText = applyAllSuggestions(text, result.suggestions);
@@ -243,7 +254,6 @@ export default function WritingEditor({
     });
   };
 
-  // Copy Corrected Text
   const handleCopyResult = () => {
     if (!result) return;
     navigator.clipboard.writeText(result.correctedText);
@@ -251,14 +261,18 @@ export default function WritingEditor({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Replace Original with Corrected
   const handleReplaceOriginal = () => {
     if (!result) return;
     updateTextWithHistory(result.correctedText);
+    const newInsights = analyzeWritingQuality(result.correctedText, 0, 0, 0);
+    setResult({
+      ...result,
+      suggestions: [],
+      qualityInsights: newInsights,
+    });
     setMobileTab('editor');
   };
 
-  // Sentence Rewriter Trigger
   const handleTriggerRewrite = () => {
     const el = textareaRef.current;
     if (!el) return;
@@ -268,7 +282,6 @@ export default function WritingEditor({
     let selectedText = text.substring(start, end).trim();
 
     if (!selectedText) {
-      // If nothing selected, pick the first sentence or full text
       selectedText = sentences[0] || text.trim();
     }
 
@@ -281,29 +294,26 @@ export default function WritingEditor({
     setRewriteModalOpen(true);
   };
 
-  // Replace rewritten sentence in text
   const handleApplyRewrite = (newSentence: string) => {
     if (!selectedForRewrite) return;
     const updated = text.replace(selectedForRewrite, newSentence);
     updateTextWithHistory(updated);
   };
 
-  // Save Document to database (if authenticated)
   const handleSaveDocument = useCallback(async () => {
     if (!user) {
-      alert('Please sign in or create a free account to save documents to your history.');
+      alert('Please sign in or create an account to save documents to your history.');
       return;
     }
 
     setSaveStatus('saving');
     try {
       if (docId) {
-        // Update existing
         const res = await fetch(`/api/documents/${docId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title,
+            title: title.trim() || 'Untitled Writing',
             currentText: result?.correctedText || text,
             originalText: text,
             language,
@@ -315,12 +325,11 @@ export default function WritingEditor({
           setSaveStatus('unsaved');
         }
       } else {
-        // Create new
         const res = await fetch('/api/documents', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title,
+            title: title.trim() || 'Untitled Writing',
             currentText: result?.correctedText || text,
             originalText: text,
             language,
@@ -339,12 +348,36 @@ export default function WritingEditor({
     }
   }, [user, docId, title, result, text, language]);
 
+  // Optional auto-save debounce
+  useEffect(() => {
+    if (!user || user.preferences?.autoSave === false) return;
+    if (saveStatus !== 'unsaved' || !text.trim() || !docId) return;
+
+    const timer = setTimeout(() => {
+      handleSaveDocument();
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [saveStatus, text, docId, user, handleSaveDocument]);
+
+  const handleModeChange = (newMode: WritingMode) => {
+    if (newMode === mode) return;
+    setMode(newMode);
+    // A result generated under the previous mode no longer matches the
+    // newly selected mode's style — invalidate it rather than keep
+    // displaying (and mislabeling) stale output. Does not trigger a new
+    // AI request; the user must press "Check Grammar" again.
+    setResult(null);
+  };
+
+  const modeInfo = WRITING_MODES[mode];
+
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* Top Document Header & Meta Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center gap-3 flex-1">
-          <FileCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+    <div className="space-y-5">
+      {/* A. Document Toolbar */}
+      <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#131722] shadow-xs px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Left: Editable Title & Status Indicator */}
+        <div className="flex items-center gap-3 min-w-0">
           <input
             type="text"
             value={title}
@@ -352,136 +385,139 @@ export default function WritingEditor({
               setTitle(e.target.value);
               setSaveStatus('unsaved');
             }}
-            placeholder="Document Title..."
-            className="text-base sm:text-lg font-bold text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-indigo-500 focus:outline-none transition-colors w-full max-w-md"
+            placeholder="Untitled Writing"
+            className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 bg-transparent hover:bg-slate-100/80 dark:hover:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-[#3647C8] rounded-lg px-2.5 py-1 transition-colors w-48 sm:w-72 truncate"
           />
+
+          <div className="flex items-center gap-1.5 text-xs shrink-0">
+            <span className="text-slate-300 dark:text-slate-600">•</span>
+            {saveStatus === 'saving' ? (
+              <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                <RefreshCw className="w-3 h-3 animate-spin text-[#3647C8]" />
+                Saving…
+              </span>
+            ) : saveStatus === 'saved' ? (
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5" />
+                Saved
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                Unsaved changes
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          {/* Language Variant Selector */}
+        {/* Right: Language, Explanation & Manual Save */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap">
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as LanguageVariant)}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="h-8.5 text-xs rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#3647C8] transition-colors"
           >
-            <option value="en-US">American English (en-US)</option>
-            <option value="en-GB">British English (en-GB)</option>
+            <option value="en-US">American English</option>
+            <option value="en-GB">British English</option>
           </select>
 
-          {/* Explanation Level Selector */}
           <select
             value={explanationLevel}
             onChange={(e) => setExplanationLevel(e.target.value as ExplanationLevel)}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="h-8.5 text-xs rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#3647C8] transition-colors"
           >
             <option value="simple">Simple Explanations</option>
-            <option value="detailed">Detailed Grammar Rules</option>
+            <option value="detailed">Detailed Explanations</option>
           </select>
 
-          {/* Save Button */}
-          <button
+          <Button
             onClick={handleSaveDocument}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-              saveStatus === 'saved'
-                ? 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
-            }`}
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            className="h-8.5 text-xs shadow-xs"
           >
-            {saveStatus === 'saving' ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            ) : saveStatus === 'saved' ? (
-              <Check className="w-3.5 h-3.5 text-emerald-500" />
-            ) : (
-              <Save className="w-3.5 h-3.5" />
-            )}
-            <span>
-              {saveStatus === 'saving'
-                ? 'Saving...'
-                : saveStatus === 'saved'
-                ? 'Saved'
-                : 'Save Document'}
-            </span>
-          </button>
+            <Save className="w-3.5 h-3.5 mr-1 text-slate-500" />
+            Save
+          </Button>
         </div>
       </div>
 
-      {/* Writing Mode Selector Bar */}
-      <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-indigo-500" />
-            Writing Mode:
-          </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            {WRITING_MODES[mode].detailedDescription}
+      {/* B. Writing Modes Selector */}
+      <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#131722] shadow-xs p-3 sm:p-3.5">
+        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Writing Mode
+            </span>
+          </div>
+          <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline-block">
+            {modeInfo.name}: {modeInfo.shortDescription}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        {/* 10 Modes Pill Selector (No redundant uppercase badges) */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {Object.values(WRITING_MODES).map((m) => {
             const isSelected = mode === m.id;
             return (
               <button
                 key={m.id}
-                onClick={() => setMode(m.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all border ${
+                onClick={() => handleModeChange(m.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-150 shrink-0 ${
                   isSelected
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/25'
-                    : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'bg-[#3647C8] text-white shadow-xs font-semibold'
+                    : 'bg-slate-100/80 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-slate-750'
                 }`}
               >
-                <span>{m.name}</span>
-                <span
-                  className={`text-[9px] px-1 py-0.2 rounded font-bold uppercase ${
-                    isSelected
-                      ? 'bg-indigo-700/60 text-indigo-100'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  {m.badge}
-                </span>
+                {m.name}
               </button>
             );
           })}
         </div>
+
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 sm:hidden">
+          {modeInfo.detailedDescription}
+        </p>
       </div>
 
       {/* Mobile Tab Switcher */}
-      <div className="lg:hidden flex rounded-xl bg-slate-200 dark:bg-slate-800 p-1">
+      <div className="lg:hidden flex items-center p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800 text-xs font-medium">
         <button
           onClick={() => setMobileTab('editor')}
-          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${
+          className={`flex-1 py-2 rounded-lg transition-all ${
             mobileTab === 'editor'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-400'
+              ? 'bg-white dark:bg-[#131722] text-slate-900 dark:text-slate-100 shadow-xs font-semibold'
+              : 'text-slate-500 dark:text-slate-400'
           }`}
         >
-          Original Editor ({wordCount} words)
+          Your Writing ({wordCount} words)
         </button>
         <button
           onClick={() => setMobileTab('result')}
-          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${
+          className={`flex-1 py-2 rounded-lg transition-all ${
             mobileTab === 'result'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-400'
+              ? 'bg-white dark:bg-[#131722] text-slate-900 dark:text-slate-100 shadow-xs font-semibold'
+              : 'text-slate-500 dark:text-slate-400'
           }`}
         >
-          AI Results & Suggestions {result ? `(${result.suggestions.length})` : ''}
+          Suggestions {result ? `(${result.suggestions.length})` : ''}
         </button>
       </div>
 
-      {/* Main Split Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {/* LEFT PANEL: Original Text Editor */}
+      {/* C. Main Editor Layout: Two Balanced 50/50 Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch min-h-[580px]">
+        {/* LEFT PANEL: Your Writing */}
         <div
-          className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col min-h-[540px] overflow-hidden ${
-            mobileTab === 'editor' ? 'block' : 'hidden lg:flex'
+          className={`rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#131722] shadow-xs flex flex-col min-h-[580px] ${
+            mobileTab === 'editor' ? 'flex' : 'hidden lg:flex'
           }`}
         >
-          {/* Editor Header Toolbar */}
-          <div className="p-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between gap-2 flex-wrap">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Original Text
+          {/* Header & Editing Toolbar */}
+          <div className="h-13 px-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/30 rounded-t-xl shrink-0">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Your Writing
             </span>
 
             <div className="flex items-center gap-1">
@@ -489,269 +525,279 @@ export default function WritingEditor({
                 onClick={handleUndo}
                 disabled={historyIndex <= 0}
                 title="Undo"
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
+                aria-label="Undo"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-4 h-4" />
               </button>
-
               <button
                 onClick={handleRedo}
                 disabled={historyIndex >= history.length - 1}
                 title="Redo"
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
+                aria-label="Redo"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
               >
-                <RotateCw className="w-3.5 h-3.5" />
+                <RotateCw className="w-4 h-4" />
               </button>
-
+              <button
+                onClick={handleCopyText}
+                title="Copy writing"
+                aria-label="Copy writing"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
               <button
                 onClick={handlePaste}
                 title="Paste from clipboard"
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                aria-label="Paste from clipboard"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
               >
-                <Clipboard className="w-3.5 h-3.5" />
+                <Clipboard className="w-4 h-4" />
               </button>
-
               <button
                 onClick={handleTriggerRewrite}
-                title="Rewrite Selected Sentence"
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-950/60 border border-purple-200 dark:border-purple-900 transition-colors"
+                title="Rewrite selected sentence"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-[#3647C8] dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 hover:bg-indigo-100 transition-colors ml-1"
               >
-                <Sparkles className="w-3 h-3 text-purple-600 dark:text-purple-400" />
-                Rewrite
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Rewrite</span>
               </button>
-
               <button
                 onClick={handleClear}
                 title="Clear all text"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                aria-label="Clear all text"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors ml-1"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Text Area */}
-          <div className="relative flex-1 p-4">
+          {/* Text Input Area & Empty State */}
+          <div className="relative flex-1 p-5 flex flex-col min-h-[420px]">
             <textarea
               ref={textareaRef}
               value={text}
               onChange={(e) => updateTextWithHistory(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Paste or type any English text here to detect and correct grammar, spelling, and sentence flow issues..."
-              className="w-full h-full min-h-[360px] bg-transparent resize-none text-slate-900 dark:text-slate-100 text-sm sm:text-base leading-relaxed focus:outline-none placeholder:text-slate-400 font-normal"
+              placeholder="Start writing or paste your text here to check grammar, spelling, tone, and readability…"
+              className="flex-1 w-full border-none bg-transparent resize-none focus:outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 text-sm sm:text-base leading-relaxed"
             />
 
             {text.length === 0 && (
               <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-500 mb-3">
-                  <Sparkles className="w-6 h-6" />
-                </div>
-                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
-                  Start writing or try our example
-                </h4>
-                <p className="text-xs text-slate-400 max-w-sm mb-4">
-                  Check grammar, spelling, tone, and readability with instant AI explanations.
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Start writing or paste your text
                 </p>
-                <button
-                  type="button"
-                  onClick={handleLoadSample}
-                  className="pointer-events-auto px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors"
-                >
-                  Load Example Sentence
-                </button>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-4">
+                  Your writing suggestions will appear after you check your text.
+                </p>
+                <div className="pointer-events-auto">
+                  <Button
+                    onClick={handleLoadSample}
+                    variant="outline"
+                    size="sm"
+                    className="shadow-xs"
+                  >
+                    Try an Example
+                  </Button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Editor Footer: Stats & Correct Button */}
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-              <span>
-                <strong>{wordCount}</strong> words
-              </span>
+          {/* Bottom Toolbar with Metrics and Primary Check Grammar Button */}
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/30 rounded-b-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{wordCount}</span>{' '}
+              words
               <span>•</span>
-              <span>
-                <strong>{charCount}</strong> characters
-              </span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{charCount}</span>{' '}
+              characters
               <span>•</span>
-              <span>
-                <strong>{sentenceCount}</strong> sentences
-              </span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                {sentenceCount}
+              </span>{' '}
+              sentences
             </div>
 
-            <button
+            <Button
               onClick={handleCorrect}
               disabled={!text.trim() || loading}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-md shadow-indigo-500/25 transition-all hover:scale-[1.02]"
+              className="w-full sm:w-auto shadow-xs"
             >
               {loading ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Checking Writing...</span>
+                  <RefreshCw className="w-4 h-4 animate-spin mr-1.5" />
+                  Checking…
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Correct Grammar</span>
-                  <span className="text-[10px] opacity-75 font-mono ml-1 hidden sm:inline">
-                    (Ctrl+Enter)
-                  </span>
+                  <Check className="w-4 h-4 mr-1.5" />
+                  Check Grammar
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* RIGHT PANEL: Corrected Text, Suggestions, Diff & Insights */}
+        {/* RIGHT PANEL: Writing Suggestions */}
         <div
-          className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col min-h-[540px] overflow-hidden ${
-            mobileTab === 'result' ? 'block' : 'hidden lg:flex'
+          className={`rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#131722] shadow-xs flex flex-col min-h-[580px] ${
+            mobileTab === 'result' ? 'flex' : 'hidden lg:flex'
           }`}
         >
-          {/* Right Panel Tabs */}
-          <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 flex items-center justify-between gap-2 overflow-x-auto">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setRightTab('corrected')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                  rightTab === 'corrected'
-                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Check className="w-3.5 h-3.5" />
-                Corrected Text
-              </button>
-
-              <button
-                onClick={() => setRightTab('suggestions')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                  rightTab === 'suggestions'
-                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <AlertCircle className="w-3.5 h-3.5" />
-                Suggestions {result ? `(${result.suggestions.length})` : ''}
-              </button>
-
-              <button
-                onClick={() => setRightTab('diff')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                  rightTab === 'diff'
-                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <ArrowRightLeft className="w-3.5 h-3.5" />
-                Diff View
-              </button>
-
-              <button
-                onClick={() => setRightTab('insights')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                  rightTab === 'insights'
-                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Activity className="w-3.5 h-3.5" />
-                Insights
-              </button>
+          {/* Header & Suggestion Actions */}
+          <div className="h-13 px-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/30 rounded-t-xl shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Writing Suggestions
+              </span>
+              {result && (
+                <span className="text-xs font-semibold text-[#3647C8] dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-full">
+                  {result.suggestions.length}
+                </span>
+              )}
             </div>
 
-            {/* Quick Actions for Results */}
             {result && (
-              <div className="flex items-center gap-1">
-                <button
+              <div className="flex items-center gap-1.5">
+                <Button
                   onClick={handleCopyResult}
-                  title="Copy corrected text"
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
                 >
                   {copied ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    <>
+                      <Check className="w-3.5 h-3.5 mr-1 text-emerald-500" />
+                      Copied
+                    </>
                   ) : (
-                    <Copy className="w-3.5 h-3.5" />
+                    <>
+                      <Copy className="w-3.5 h-3.5 mr-1" />
+                      Copy
+                    </>
                   )}
-                  <span>{copied ? 'Copied!' : 'Copy'}</span>
-                </button>
-
-                <button
+                </Button>
+                <Button
                   onClick={handleReplaceOriginal}
-                  title="Replace original text with corrected"
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
                 >
-                  <ArrowRightLeft className="w-3.5 h-3.5" />
-                  <span>Replace</span>
-                </button>
+                  <ArrowRightLeft className="w-3.5 h-3.5 mr-1" />
+                  Replace
+                </Button>
+                {result.suggestions.length > 0 && (
+                  <Button
+                    onClick={handleAcceptAll}
+                    size="sm"
+                    className="h-8 text-xs shadow-xs"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5 mr-1" />
+                    Accept All
+                  </Button>
+                )}
               </div>
             )}
           </div>
 
-          {/* Right Panel Body */}
+          {/* Clean Tab Navigation Bar */}
+          <div className="flex border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#131722] px-3 shrink-0">
+            {[
+              { id: 'corrected', label: 'Improved Text', icon: Check },
+              { id: 'suggestions', label: 'Suggestions', icon: AlertCircle },
+              { id: 'diff', label: 'Diff View', icon: ArrowRightLeft },
+              { id: 'insights', label: 'Insights', icon: Activity },
+            ].map((tab) => {
+              const active = rightTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() =>
+                    setRightTab(tab.id as 'corrected' | 'suggestions' | 'diff' | 'insights')
+                  }
+                  className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-colors shrink-0 ${
+                    active
+                      ? 'border-[#3647C8] text-[#3647C8] dark:border-indigo-400 dark:text-indigo-400 font-semibold'
+                      : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                  {tab.id === 'suggestions' && result && (
+                    <span className="text-[11px] font-semibold text-slate-400">
+                      ({result.suggestions.length})
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab Body */}
           <div className="flex-1 p-5 overflow-y-auto">
             {loading ? (
-              <div className="h-full min-h-[360px] flex flex-col items-center justify-center gap-3 text-slate-400">
-                <RefreshCw className="w-8 h-8 animate-spin text-indigo-500" />
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  AI is analyzing grammar and syntax...
+              <div className="h-full min-h-[300px] flex flex-col items-center justify-center gap-2.5 text-slate-400">
+                <RefreshCw className="w-7 h-7 animate-spin text-[#3647C8]" />
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  AI is reviewing your writing…
                 </p>
                 <p className="text-xs text-slate-400">
-                  Checking verb agreement, spelling, punctuation, and flow.
+                  Checking grammar, syntax, flow, and clarity.
                 </p>
               </div>
             ) : !result ? (
-              <div className="h-full min-h-[360px] flex flex-col items-center justify-center text-center p-6 text-slate-400">
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
-                  <Check className="w-7 h-7" />
+              <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center p-6">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800/60 text-slate-400 flex items-center justify-center mb-3">
+                  <Check className="w-5 h-5" />
                 </div>
-                <h4 className="text-base font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Ready to Polish Your Writing
+                <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  Ready to review your writing
                 </h4>
-                <p className="text-xs text-slate-400 max-w-sm mb-4">
-                  Enter your text on the left and click &ldquo;Correct Grammar&rdquo; to receive
-                  actionable corrections, tone enhancements, and detailed grammar explanations.
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs leading-relaxed">
+                  Check your text to see corrections, suggestions, and writing insights.
                 </p>
               </div>
             ) : (
-              <div>
-                {/* TAB 1: Corrected Content */}
+              <div className="space-y-4">
                 {rightTab === 'corrected' && (
                   <div className="space-y-4">
-                    {/* Summary Banner */}
-                    <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 flex items-start justify-between gap-3">
-                      <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block mb-0.5">
-                          Editorial Summary ({result.mode.replace('_', ' ')})
-                        </span>
-                        <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                          {result.summary}
-                        </p>
-                      </div>
-
-                      {result.suggestions.length > 0 && (
-                        <button
-                          onClick={handleAcceptAll}
-                          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all"
-                        >
-                          <CheckCheck className="w-3.5 h-3.5" />
-                          Accept All ({result.suggestions.length})
-                        </button>
-                      )}
+                    {/* Summary Card */}
+                    <div className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                      <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">
+                        Editorial Summary ({modeInfo.name})
+                      </span>
+                      <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
+                        {result.summary}
+                      </p>
                     </div>
 
-                    {/* Corrected Text Box */}
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-base leading-relaxed whitespace-pre-wrap select-text">
+                    {/* Improved Text Surface */}
+                    <div className="p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/30 text-slate-900 dark:text-slate-100 text-sm sm:text-base leading-relaxed whitespace-pre-wrap select-text">
                       {result.correctedText}
                     </div>
 
-                    {/* Quick suggestion cards snippet */}
+                    {/* Key Corrections list */}
                     {result.suggestions.length > 0 && (
                       <div className="pt-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                          Key Corrections ({result.suggestions.length}):
-                        </span>
-                        <div className="space-y-2">
+                        <div className="flex items-center justify-between mb-2.5">
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            Key Corrections ({result.suggestions.length})
+                          </span>
+                          {result.suggestions.length > 3 && (
+                            <button
+                              onClick={() => setRightTab('suggestions')}
+                              className="text-xs font-semibold text-[#3647C8] dark:text-indigo-400 hover:underline"
+                            >
+                              View all {result.suggestions.length} →
+                            </button>
+                          )}
+                        </div>
+                        <div className="space-y-3">
                           {result.suggestions.slice(0, 3).map((sug) => (
                             <SuggestionCard
                               key={sug.id}
@@ -761,45 +807,39 @@ export default function WritingEditor({
                               explanationLevel={explanationLevel}
                             />
                           ))}
-                          {result.suggestions.length > 3 && (
-                            <button
-                              onClick={() => setRightTab('suggestions')}
-                              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline pt-1 block"
-                            >
-                              View all {result.suggestions.length} suggestions →
-                            </button>
-                          )}
                         </div>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* TAB 2: Suggestions List */}
                 {rightTab === 'suggestions' && (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                         All Suggestions ({result.suggestions.length})
                       </span>
                       {result.suggestions.length > 0 && (
-                        <button
+                        <Button
                           onClick={handleAcceptAll}
-                          className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                          size="sm"
+                          className="h-8 text-xs"
                         >
-                          <CheckCheck className="w-3.5 h-3.5" />
+                          <CheckCheck className="w-3.5 h-3.5 mr-1" />
                           Accept All
-                        </button>
+                        </Button>
                       )}
                     </div>
 
                     {result.suggestions.length === 0 ? (
-                      <div className="py-12 text-center text-slate-400">
+                      <div className="py-14 text-center">
                         <Check className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          All suggestions addressed!
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                          All suggestions addressed
                         </p>
-                        <p className="text-xs">Your text is grammatically clean and consistent.</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Your text is grammatically clean and consistent.
+                        </p>
                       </div>
                     ) : (
                       result.suggestions.map((sug) => (
@@ -815,18 +855,16 @@ export default function WritingEditor({
                   </div>
                 )}
 
-                {/* TAB 3: Diff View */}
                 {rightTab === 'diff' && (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span>Red = Removed/Modified</span>
-                      <span>Green = Added/Corrected</span>
+                    <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+                      <span>Removed / Modified</span>
+                      <span>Added / Corrected</span>
                     </div>
                     <DiffViewer original={text} corrected={result.correctedText} />
                   </div>
                 )}
 
-                {/* TAB 4: Writing Insights */}
                 {rightTab === 'insights' && (
                   <WritingInsightsPanel insights={result.qualityInsights} />
                 )}
@@ -836,11 +874,12 @@ export default function WritingEditor({
         </div>
       </div>
 
-      {/* Floating Ask AI Button (Bottom Right) */}
+      {/* Floating Ask AI Button (Fixed bottom right, unobtrusive) */}
       <div className="fixed bottom-6 right-6 z-40">
         <button
           onClick={() => setChatDrawerOpen(true)}
-          className="flex items-center gap-2 px-4 py-3 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-xl shadow-indigo-500/30 transition-all hover:scale-105"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#3647C8] hover:bg-[#2b39a8] text-white font-medium text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-150 active:scale-95"
+          aria-label="Open Ask AI Assistant chat drawer"
         >
           <MessageSquare className="w-4 h-4" />
           <span>Ask AI Assistant</span>
@@ -855,7 +894,7 @@ export default function WritingEditor({
         onReplace={handleApplyRewrite}
       />
 
-      {/* Ask AI Chat Drawer */}
+      {/* Ask AI Assistant Side Drawer */}
       <AskAIChatDrawer
         isOpen={chatDrawerOpen}
         onClose={() => setChatDrawerOpen(false)}

@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Sparkles,
   BookOpen,
   LayoutDashboard,
   Settings,
@@ -17,6 +16,23 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/Button';
+
+const PUBLIC_LINKS = [
+  { href: '/', label: 'Home' },
+  { href: '#features', label: 'Features' },
+  { href: '/editor', label: 'Writing Editor' },
+  { href: '#how-it-works', label: 'How It Works' },
+];
+
+const INTERNAL_LINKS = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/editor', label: 'Writing Editor', icon: FileEdit },
+  { href: '/documents', label: 'My Documents', icon: BookOpen },
+  { href: '/settings', label: 'Settings', icon: Settings },
+];
+
+type NavLink = { href: string; label: string; icon?: React.ElementType };
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -25,91 +41,112 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/editor', label: 'Writing Editor', icon: FileEdit },
-    ...(user
-      ? [
-          { href: '/documents', label: 'My Documents', icon: BookOpen },
-          { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        ]
-      : []),
-  ];
+  const isHomePage = pathname === '/';
 
   const toggleTheme = () => {
     setTheme(effectiveTheme === 'dark' ? 'light' : 'dark');
   };
 
+  const desktopLinks = isHomePage
+    ? PUBLIC_LINKS
+    : PUBLIC_LINKS.filter((l) => !l.href.startsWith('#'));
+
+  const authedDesktopLinks = user
+    ? isHomePage
+      ? [
+          { href: '/documents', label: 'My Documents', icon: BookOpen },
+          { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        ]
+      : []
+    : [];
+
+  const mobileLinks: NavLink[] = isHomePage
+    ? PUBLIC_LINKS as NavLink[]
+    : [
+        { href: '/', label: 'Home' },
+        ...INTERNAL_LINKS,
+      ];
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5 text-white" />
+    <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-[var(--background)]/95 backdrop-blur supports-[backdrop-blur]:bg-[var(--background)]/80">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-12 sm:h-14">
+          {/* Brand */}
+          <Link href="/" className="flex items-center gap-2.5 group" aria-label="VerbaCraft Home">
+            <div className="w-7 h-7 rounded-md bg-[var(--primary)] flex items-center justify-center text-white group-hover:bg-[var(--primary-hover)] transition-colors">
+              <FileEdit className="w-4 h-4" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
-                VerbaCraft
-                <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
-                  AI
-                </span>
-              </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 -mt-1 hidden sm:block">
-                Grammar Correction Assistant
-              </span>
-            </div>
+            <span className="font-semibold text-base tracking-tight text-[var(--foreground)] sm:block">
+              VerbaCraft
+            </span>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              const Icon = link.icon;
+          {/* Desktop navigation */}
+          <nav className="hidden lg:flex items-center gap-1" role="navigation" aria-label="Main navigation">
+            {desktopLinks.map((link) => {
+              const isActive = pathname === link.href || (link.href.startsWith('#') && false);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                     isActive
-                      ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                      ? 'bg-[var(--primary-light)] text-[var(--primary)]'
+                      : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-elevated)]'
                   }`}
+                  aria-current={isActive ? 'page' : undefined}
                 >
-                  {Icon && <Icon className="w-4 h-4 opacity-75" />}
+                  {link.label}
+                </Link>
+              );
+            })}
+            {authedDesktopLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    isActive
+                      ? 'bg-[var(--primary-light)] text-[var(--primary)]'
+                      : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-elevated)]'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
                   {link.label}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Right Action Tools */}
+          {/* Right actions */}
           <div className="flex items-center gap-2">
-            {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              aria-label="Toggle color theme"
-              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label={effectiveTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+              className="p-2 rounded-md text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-elevated)] transition-colors"
             >
               {effectiveTheme === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400" />
+                <Sun className="w-4.5 h-4.5" />
               ) : (
-                <Moon className="w-4 h-4 text-slate-600" />
+                <Moon className="w-4.5 h-4.5" />
               )}
             </button>
 
-            {/* User Auth status */}
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors"
+                  className="flex items-center gap-2 p-1 rounded-md hover:bg-[var(--surface-elevated)] text-[var(--foreground)] transition-colors"
+                  aria-expanded={userDropdownOpen}
+                  aria-haspopup="true"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-medium text-xs flex items-center justify-center shadow-sm">
+                  <div className="w-7 h-7 rounded-full bg-[var(--primary)] text-white font-medium text-[10px] flex items-center justify-center">
                     {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm font-medium hidden sm:inline-block max-w-[120px] truncate">
+                  <span className="text-sm font-medium hidden sm:inline-block max-w-[130px] truncate">
                     {user.name || user.email}
                   </span>
                 </button>
@@ -119,13 +156,14 @@ export default function Navbar() {
                     <div
                       className="fixed inset-0 z-40"
                       onClick={() => setUserDropdownOpen(false)}
+                      aria-hidden="true"
                     />
-                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
-                      <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                    <div className="absolute right-0 mt-2 w-56 rounded-lg bg-[var(--background)] border border-[var(--border)] shadow-lg py-2 z-50 animate-in zoom-in-95 duration-150">
+                      <div className="px-4 py-2 border-b border-[var(--border)]">
+                        <p className="text-sm font-semibold text-[var(--foreground)] truncate">
                           {user.name || 'User'}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        <p className="text-xs text-[var(--foreground-muted)] truncate">
                           {user.email}
                         </p>
                       </div>
@@ -133,38 +171,38 @@ export default function Navbar() {
                       <Link
                         href="/documents"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--surface-elevated)]"
                       >
-                        <BookOpen className="w-4 h-4 text-indigo-500" />
+                        <BookOpen className="w-4 h-4 text-[var(--primary)]" />
                         My Documents
                       </Link>
 
                       <Link
                         href="/dashboard"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--surface-elevated)]"
                       >
-                        <LayoutDashboard className="w-4 h-4 text-indigo-500" />
+                        <LayoutDashboard className="w-4 h-4 text-[var(--primary)]" />
                         Dashboard
                       </Link>
 
                       <Link
                         href="/settings"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--surface-elevated)]"
                       >
-                        <Settings className="w-4 h-4 text-indigo-500" />
+                        <Settings className="w-4 h-4 text-[var(--primary)]" />
                         Settings
                       </Link>
 
-                      <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+                      <div className="border-t border-[var(--border)] my-1" />
 
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
                           logout();
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--surface-elevated)]"
                       >
                         <LogOut className="w-4 h-4" />
                         Sign Out
@@ -177,24 +215,21 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   href="/auth/login"
-                  className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
                 >
                   Sign In
                 </Link>
-                <Link
-                  href="/auth/register"
-                  className="px-3.5 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-500/20 transition-all hover:shadow"
-                >
-                  Get Started
-                </Link>
+                <Button asChild size="sm">
+                  <Link href="/auth/register">Get Started</Link>
+                </Button>
               </div>
             )}
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle mobile navigation menu"
-              className="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-expanded={mobileMenuOpen}
+              className="lg:hidden p-2 rounded-md text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-elevated)]"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -202,37 +237,50 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile menu drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pt-2 pb-4 space-y-1">
-          {navLinks.map((link) => {
+        <div className="lg:hidden border-t border-[var(--border)] bg-[var(--background)] px-4 pb-4 space-y-1 animate-in fade-in duration-200">
+          {mobileLinks.map((link) => {
+            const isActive = pathname === link.href;
             const Icon = link.icon;
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${
-                  pathname === link.href
-                    ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400'
-                    : 'text-slate-700 dark:text-slate-300'
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-[var(--primary-light)] text-[var(--primary)]'
+                    : 'text-[var(--foreground)] hover:bg-[var(--surface-elevated)]'
                 }`}
               >
-                {Icon && <Icon className="w-4 h-4" />}
+                {Icon && <Icon className="w-4 h-4 shrink-0" />}
                 {link.label}
               </Link>
             );
           })}
 
           {user && (
-            <Link
-              href="/settings"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              <Settings className="w-4 h-4" />
-              Settings
-            </Link>
+            <>
+              <Link
+                href="/settings"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-elevated)]"
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </Link>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  logout();
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-elevated)]"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </>
           )}
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Navbar from '@/components/Navbar';
+import InternalLayout from '@/components/InternalLayout';
 import WritingEditor from '@/components/WritingEditor';
 import { RefreshCw } from 'lucide-react';
 
@@ -30,9 +30,9 @@ function EditorContent() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-12 text-slate-400 gap-3">
-        <RefreshCw className="w-8 h-8 animate-spin text-indigo-500" />
-        <p className="text-sm font-medium">Loading document...</p>
+      <div className="min-h-[400px] flex flex-col items-center justify-center p-12 text-slate-500">
+        <RefreshCw className="w-7 h-7 animate-spin text-[#3647C8]" />
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mt-3">Loading document…</p>
       </div>
     );
   }
@@ -49,19 +49,16 @@ function EditorContent() {
 
 export default function EditorPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
-      <Navbar />
-      <main className="flex-1 py-4">
-        <Suspense
-          fallback={
-            <div className="flex-1 flex items-center justify-center p-12 text-slate-400">
-              <RefreshCw className="w-8 h-8 animate-spin text-indigo-500" />
-            </div>
-          }
-        >
-          <EditorContent />
-        </Suspense>
-      </main>
-    </div>
+    <InternalLayout title="Writing Editor">
+      <Suspense
+        fallback={
+          <div className="min-h-[400px] flex items-center justify-center p-12 text-slate-500">
+            <RefreshCw className="w-7 h-7 animate-spin text-[#3647C8]" />
+          </div>
+        }
+      >
+        <EditorContent />
+      </Suspense>
+    </InternalLayout>
   );
 }

@@ -3,8 +3,17 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, ArrowRight, Lock, Mail, User, RefreshCw } from 'lucide-react';
+import {
+  RefreshCw,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  User,
+  FileEdit,
+} from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/context/AuthContext';
 
 export default function RegisterPage() {
@@ -14,6 +23,9 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,91 +46,129 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen flex flex-col bg-[var(--background)]">
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
-        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl p-8 space-y-6">
-          <div className="text-center space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              Create Your Account
+        <div className="w-full max-w-md border border-[var(--border)] rounded-xl bg-[var(--background)] shadow-sm p-8">
+          <div className="text-center space-y-2 mb-6">
+            <Link href="/" className="flex items-center justify-center gap-2">
+              <div className="w-8 h-8 rounded-md bg-[var(--primary)] flex items-center justify-center text-white">
+                <FileEdit className="w-4.5 h-4.5" />
+              </div>
+              <span className="font-semibold text-base tracking-tight text-[var(--foreground)]">
+                VerbaCraft
+              </span>
+            </Link>
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
+              Create Account
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-[var(--foreground-muted)]">
               Start writing with AI-powered grammar correction and tone optimization.
             </p>
           </div>
 
           {error && (
-            <div className="p-3 text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-950/40 rounded-xl border border-red-200 dark:border-red-900">
+            <div className="mb-4 p-3 rounded-lg text-xs font-semibold flex items-center gap-2 bg-red-50 text-red-700 border border-red-200/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/50">
+              <AlertCircle className="w-3.5 h-3.5" />
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block text-xs font-semibold text-[var(--foreground-muted)]">
                 Full Name
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
+                <User className="w-4 h-4 text-[var(--foreground-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  label={undefined}
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Jane Doe"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                  className="pl-9"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block text-xs font-semibold text-[var(--foreground-muted)]">
                 Email Address
               </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
-                />
-              </div>
+              <Input
+                label={undefined}
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <div className="space-y-1.5 relative">
+              <label className="block text-xs font-semibold text-[var(--foreground-muted)]">
                 Password
               </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
-                />
-              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 6 characters"
+                className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] pl-3.5 pr-10 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--foreground-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-colors disabled:bg-[var(--surface-elevated)] disabled:text-[var(--foreground-muted)] disabled:cursor-not-allowed"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
+
+            <div className="space-y-1.5 relative">
+              <label className="block text-xs font-semibold text-[var(--foreground-muted)]">
+                Confirm Password
+              </label>
+              <input
+                type={showConfirm ? 'text' : 'password'}
+                required
+                minLength={6}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Type your password again"
+                className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] pl-3.5 pr-10 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--foreground-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-colors disabled:bg-[var(--surface-elevated)] disabled:text-[var(--foreground-muted)] disabled:cursor-not-allowed"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                aria-label={showConfirm ? 'Hide password' : 'Show password'}
+              >
+                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {password && confirmPassword && password !== confirmPassword && (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                Passwords do not match.
+              </p>
+            )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/25 transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-60 disabled:pointer-events-none"
             >
               {loading ? (
                 <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Creating Account...</span>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin mr-2" />
+                  Creating account…
                 </>
               ) : (
                 <>
@@ -129,20 +179,20 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="pt-2 text-center space-y-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="pt-4 text-center space-y-3">
+            <p className="text-xs text-[var(--foreground-muted)]">
               Already have an account?{' '}
-              <Link href="/auth/login" className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+              <Link href="/auth/login" className="font-semibold text-[var(--primary)] hover:underline">
                 Sign in
               </Link>
             </p>
 
-            <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+            <div className="border-t border-[var(--border-subtle)] pt-3">
               <Link
                 href="/editor"
-                className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                className="text-xs font-semibold text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
               >
-                Continue as Guest without signing in →
+                Continue as Guest →
               </Link>
             </div>
           </div>

@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import {
-  Sparkles,
   Copy,
   Check,
   RefreshCw,
@@ -17,6 +16,7 @@ import {
   Smile,
 } from 'lucide-react';
 import { RewriteTone } from '@/lib/ai/types';
+import { Button } from '@/components/ui/Button';
 
 interface SentenceRewriterModalProps {
   isOpen: boolean;
@@ -87,48 +87,46 @@ export default function SentenceRewriterModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
+      <div
+        className="w-full max-w-xl border border-slate-200/90 dark:border-slate-800 rounded-2xl bg-white dark:bg-[#131722] shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Sentence Rewriting Assistant
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Explore alternative ways to express your thought with tailored tone adjustments.
-              </p>
-            </div>
+          <div>
+            <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              Sentence Rewriting Assistant
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Explore alternative formulations adapted to your desired tone.
+            </p>
           </div>
-
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Close modal"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Original Sentence Display */}
-        <div className="my-4 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-            Original Selected Sentence:
+        <div className="my-4 p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+          <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">
+            Original Sentence
           </span>
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200 italic">
+          <p className="text-sm text-slate-800 dark:text-slate-200 italic">
             &ldquo;{sentence}&rdquo;
           </p>
         </div>
 
         {/* Tone Selector Pills */}
         <div className="mb-4">
-          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-2">
-            Select Desired Writing Tone:
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">
+            Target Tone
           </span>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {TONES.map((t) => {
               const Icon = t.icon;
               const isSelected = selectedTone === t.id;
@@ -136,14 +134,14 @@ export default function SentenceRewriterModal({
                 <button
                   key={t.id}
                   onClick={() => handleToneChange(t.id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors shrink-0 ${
                     isSelected
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/25'
-                      : 'bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                      ? 'bg-[#3647C8] text-white border-[#3647C8] shadow-xs'
+                      : 'bg-white dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{t.label}</span>
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{t.label}</span>
                 </button>
               );
             })}
@@ -151,46 +149,43 @@ export default function SentenceRewriterModal({
         </div>
 
         {/* Alternatives Section */}
-        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+        <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5">
           {error && (
-            <div className="p-3 text-xs text-red-600 bg-red-50 dark:bg-red-950/40 rounded-xl border border-red-200 dark:border-red-900">
+            <div className="p-3 rounded-lg text-xs text-red-600 bg-red-50 border border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/50">
               {error}
             </div>
           )}
 
           {loading ? (
-            <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
-              <RefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
-              <p className="text-xs font-medium">Generating tone-adapted variations...</p>
+            <div className="py-14 flex flex-col items-center justify-center gap-2.5 text-slate-400">
+              <RefreshCw className="w-6 h-6 animate-spin text-[#3647C8]" />
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Generating tailored variations…
+              </p>
             </div>
           ) : alternatives.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
-                Click any tone above or generate alternatives for this sentence.
+            <div className="py-10 text-center text-slate-500">
+              <p className="text-xs mb-3">
+                Select a tone to generate tailored sentence variations.
               </p>
-              <button
-                onClick={() => fetchRewrites(selectedTone)}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all"
-              >
-                Generate Rewrites
-              </button>
+              <Button onClick={() => fetchRewrites(selectedTone)} size="sm">
+                Generate Variations
+              </Button>
             </div>
           ) : (
             alternatives.map((alt, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors group"
+                className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:border-[#3647C8]/40 transition-colors"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm text-slate-800 dark:text-slate-100 font-medium leading-relaxed">
-                    {alt}
-                  </p>
-                </div>
+                <p className="text-sm text-slate-900 dark:text-slate-100 font-medium leading-relaxed mb-3">
+                  {alt}
+                </p>
 
-                <div className="flex items-center justify-end gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                <div className="flex items-center justify-end gap-2">
                   <button
                     onClick={() => handleCopy(alt, idx)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition-colors"
                   >
                     {copiedIndex === idx ? (
                       <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -200,32 +195,30 @@ export default function SentenceRewriterModal({
                     {copiedIndex === idx ? 'Copied' : 'Copy'}
                   </button>
 
-                  <button
+                  <Button
                     onClick={() => {
                       onReplace(alt);
                       onClose();
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-500/20 transition-all hover:scale-[1.02]"
+                    size="sm"
                   >
-                    <Check className="w-3.5 h-3.5" />
-                    Replace in Editor
-                  </button>
+                    <Check className="w-3.5 h-3.5 mr-1" />
+                    Replace Selection
+                  </Button>
                 </div>
               </div>
             ))
           )}
         </div>
 
-        {/* Footer with Regenerate Button */}
+        {/* Footer */}
         {alternatives.length > 0 && (
-          <div className="pt-4 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-xs text-slate-400">
-              Generated 3 alternative formulations.
-            </span>
+          <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
+            <span>{alternatives.length} alternatives generated</span>
             <button
               onClick={() => fetchRewrites(selectedTone)}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors"
+              className="flex items-center gap-1 text-xs font-medium text-[#3647C8] dark:text-indigo-400 hover:underline disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               Regenerate

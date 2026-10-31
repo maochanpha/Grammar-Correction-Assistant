@@ -2,54 +2,54 @@
 
 @layer base {
   :root {
-    --background: #f8fafc;
+    --background: #ffffff;
     --surface: #ffffff;
-    --surface-elevated: #ffffff;
-    --foreground: #0f172a;
+    --surface-elevated: #f8f9fa;
+    --foreground: #171717;
     --foreground-muted: #64748b;
-    --border: #e2e8f0;
+    --border: #e5e7eb;
     --border-subtle: #f1f5f9;
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
-    --primary-light: #eef2ff;
-    --accent: #7c3aed;
-    --accent-light: #f5f3ff;
-    
+    --primary: #3448c5;
+    --primary-hover: #2d3db5;
+    --primary-light: #eff1fa;
+    --accent: #3448c5;
+    --accent-light: #eff1fa;
+
     /* Error Category Highlights */
     --cat-grammar-bg: #fee2e2;
-    --cat-grammar-border: #f87171;
+    --cat-grammar-border: #ef4444;
     --cat-grammar-text: #b91c1c;
 
     --cat-spelling-bg: #fef3c7;
-    --cat-spelling-border: #fbbf24;
+    --cat-spelling-border: #f59e0b;
     --cat-spelling-text: #b45309;
 
-    --cat-punctuation-bg: #e0f2fe;
-    --cat-punctuation-border: #38bdf8;
-    --cat-punctuation-text: #0369a1;
+    --cat-punctuation-bg: #dbeafe;
+    --cat-punctuation-border: #3b82f6;
+    --cat-punctuation-text: #1d4ed8;
 
     --cat-clarity-bg: #ede9fe;
-    --cat-clarity-border: #a78bfa;
+    --cat-clarity-border: #a855f7;
     --cat-clarity-text: #6d28d9;
 
     --cat-style-bg: #d1fae5;
-    --cat-style-border: #34d399;
+    --cat-style-border: #22c55e;
     --cat-style-text: #047857;
   }
 
   .dark {
-    --background: #090d16;
-    --surface: #111827;
-    --surface-elevated: #1f2937;
+    --background: #111318;
+    --surface: #191c23;
+    --surface-elevated: #1e222a;
     --foreground: #f8fafc;
-    --foreground-muted: #94a3b8;
-    --border: #1f293d;
-    --border-subtle: #162032;
-    --primary: #6366f1;
-    --primary-hover: #4f46e5;
-    --primary-light: #1e1b4b;
-    --accent: #8b5cf6;
-    --accent-light: #2e1065;
+    --foreground-muted: #9ca3af;
+    --border: #303540;
+    --border-subtle: #1e222a;
+    --primary: #8393f5;
+    --primary-hover: #a5b4fc;
+    --primary-light: #1e1f2e;
+    --accent: #8393f5;
+    --accent-light: #1e1f2e;
 
     /* Dark Mode Category Highlights */
     --cat-grammar-bg: #450a0a;
@@ -77,7 +77,7 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   min-height: 100vh;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -162,4 +162,22 @@ body {
 .highlight-clarity:hover,
 .highlight-style:hover {
   filter: brightness(0.95);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
