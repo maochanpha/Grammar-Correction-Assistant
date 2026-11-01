@@ -259,7 +259,7 @@ export default function HomePage() {
                 See it in action
               </h2>
               <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
-                Paste or type a sentence below to see how PorPor AGC improves it.
+                Preview how PorPor AGC detects errors and improves sentence clarity.
               </p>
             </div>
 
@@ -272,15 +272,14 @@ export default function HomePage() {
                 {/* Your Text */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-[var(--foreground)]">Your Text</h3>
-                    <p className="ml-auto text-xs text-[var(--foreground-muted)]">Editable input</p>
+                    <h3 className="text-sm font-semibold text-[var(--foreground)]">Sample Draft</h3>
+                    <p className="ml-auto text-xs text-[var(--foreground-muted)]">Sample text (read-only)</p>
                   </div>
                   <textarea
                     value={demoInput}
-                    onChange={(e) => setDemoInput(e.target.value)}
+                    readOnly
                     rows={5}
-                    className="w-full p-4 rounded-lg text-sm text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] resize-none transition-colors"
-                    placeholder="Type or paste your text here…"
+                    className="w-full p-4 rounded-lg text-sm text-[var(--foreground)] bg-[var(--surface-elevated)]/50 border border-[var(--border)] focus:outline-none resize-none transition-colors cursor-default select-text"
                   />
                   <button
                     onClick={handleDemoCheck}

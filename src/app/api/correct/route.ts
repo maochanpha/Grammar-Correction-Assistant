@@ -63,56 +63,57 @@ export async function POST(request: Request) {
 
     const wordCount = getWords(validated.text).length;
 
-    // Record usage in background / db
-    try {
-      await prisma.usageRecord.create({
-        data: {
-          userId: user?.id,
-          guestIp: user ? null : clientIp,
-          requestType: 'grammar_correct',
-          wordCount,
-        },
-      });
-
-      // If documentId is provided and user owns document, save session
-      if (user && validated.documentId) {
-        const doc = await prisma.document.findFirst({
-          where: { id: validated.documentId, userId: user.id },
+    // Record usage and history asynchronously in background without blocking the AI response
+    void (async () => {
+      try {
+        await prisma.usageRecord.create({
+          data: {
+            userId: user?.id,
+            guestIp: user ? null : clientIp,
+            requestType: 'grammar_correct',
+            wordCount,
+          },
         });
 
-        if (doc) {
-          const session = await prisma.correctionSession.create({
-            data: {
-              documentId: doc.id,
-              userId: user.id,
-              writingMode: validated.mode,
-              language: validated.language,
-              originalText: validated.text,
-              correctedText: result.correctedText,
-              explanationLevel: validated.explanationLevel,
-            },
+        // If documentId is provided and user owns document, save session
+        if (user && validated.documentId) {
+          const doc = await prisma.document.findFirst({
+            where: { id: validated.documentId, userId: user.id },
           });
 
-          if (result.suggestions.length > 0) {
-            await prisma.correctionSuggestion.createMany({
-              data: result.suggestions.map((s) => ({
-                sessionId: session.id,
-                category: s.category,
-                originalPhrase: s.originalPhrase,
-                replacementPhrase: s.replacementPhrase,
-                explanation: s.explanation,
-                startIndex: s.startIndex,
-                endIndex: s.endIndex,
-                status: 'pending',
-              })),
+          if (doc) {
+            const session = await prisma.correctionSession.create({
+              data: {
+                documentId: doc.id,
+                userId: user.id,
+                writingMode: validated.mode,
+                language: validated.language,
+                originalText: validated.text,
+                correctedText: result.correctedText,
+                explanationLevel: validated.explanationLevel,
+              },
             });
+
+            if (result.suggestions.length > 0) {
+              await prisma.correctionSuggestion.createMany({
+                data: result.suggestions.map((s) => ({
+                  sessionId: session.id,
+                  category: s.category,
+                  originalPhrase: s.originalPhrase,
+                  replacementPhrase: s.replacementPhrase,
+                  explanation: s.explanation,
+                  startIndex: s.startIndex,
+                  endIndex: s.endIndex,
+                  status: 'pending',
+                })),
+              });
+            }
           }
         }
+      } catch (dbErr) {
+        console.warn('Failed to record usage analytics in background:', dbErr);
       }
-    } catch (dbErr) {
-      // Don't fail user request if analytics logging fails
-      console.warn('Failed to record usage analytics:', dbErr);
-    }
+    })();
 
     return NextResponse.json({
       success: true,

@@ -41,18 +41,19 @@ export async function POST(request: Request) {
 
     const result = await aiService.rewriteSentence(validated.sentence, validated.tone);
 
-    try {
-      await prisma.usageRecord.create({
+    // Record usage asynchronously in background without delaying user response
+    void prisma.usageRecord
+      .create({
         data: {
           userId: user?.id,
           guestIp: user ? null : clientIp,
           requestType: 'rewrite',
           wordCount: getWords(validated.sentence).length,
         },
+      })
+      .catch((err) => {
+        console.warn('Failed to record rewrite analytics in background:', err);
       });
-    } catch {
-      // Ignore background analytics logging errors
-    }
 
     return NextResponse.json({
       success: true,

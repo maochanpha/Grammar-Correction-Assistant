@@ -1,4 +1,5 @@
 import { GeminiAIProvider } from './gemini-provider';
+import { OpenRouterAIProvider } from './openrouter-provider';
 import { MockAIProvider } from './mock-provider';
 import {
   GrammarCorrectionResult,
@@ -29,13 +30,32 @@ export interface AIProviderInterface {
 }
 
 class UnifiedAIService implements AIProviderInterface {
+  private cachedProvider: AIProviderInterface | null = null;
+  private lastKeySignature: string = '';
+
   private getProvider(): AIProviderInterface {
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
-    if (apiKey && apiKey !== 'your-gemini-api-key-here' && apiKey.length > 5) {
-      return new GeminiAIProvider(apiKey);
+    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim() || '';
+    const geminiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY)?.trim() || '';
+    const model = process.env.OPENROUTER_MODEL || '';
+    const sig = `${openRouterKey}:${geminiKey}:${model}`;
+
+    if (this.cachedProvider && this.lastKeySignature === sig) {
+      return this.cachedProvider;
     }
 
-    return new MockAIProvider() as unknown as AIProviderInterface;
+    this.lastKeySignature = sig;
+    if (openRouterKey && openRouterKey !== 'your-openrouter-api-key-here' && openRouterKey.length > 5) {
+      this.cachedProvider = new OpenRouterAIProvider(openRouterKey, model);
+      return this.cachedProvider;
+    }
+
+    if (geminiKey && geminiKey !== 'your-gemini-api-key-here' && geminiKey.length > 5) {
+      this.cachedProvider = new GeminiAIProvider(geminiKey);
+      return this.cachedProvider;
+    }
+
+    this.cachedProvider = new MockAIProvider() as unknown as AIProviderInterface;
+    return this.cachedProvider;
   }
 
   async correctGrammar(
