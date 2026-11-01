@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -49,14 +50,19 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
           href="/"
           onClick={onCloseMobile}
           className="flex items-center gap-2.5 group"
-          aria-label="VerbaCraft Home"
+          aria-label="PorPor AGC Home"
         >
-          <div className="w-8 h-8 rounded-lg bg-[#3647C8] flex items-center justify-center text-white shadow-xs group-hover:bg-[#2b39a8] transition-colors">
-            <FileEdit className="w-4.5 h-4.5" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="PorPor AGC Logo"
+            width={34}
+            height={34}
+            className="w-8.5 h-8.5 rounded-lg object-contain shadow-xs"
+            priority
+          />
           <div>
             <span className="font-bold text-base tracking-tight text-slate-900 dark:text-slate-100 block leading-tight">
-              VerbaCraft
+              PorPor AGC
             </span>
             <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 block leading-none">
               Writing Assistant
@@ -153,7 +159,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
             onClick={onCloseMobile}
             className="block text-center py-2 px-3 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
           >
-            Sign In to VerbaCraft
+            Sign In to PorPor AGC
           </Link>
         )}
       </div>

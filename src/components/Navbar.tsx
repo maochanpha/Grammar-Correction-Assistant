@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   BookOpen,
@@ -43,6 +44,13 @@ export default function Navbar() {
 
   const isHomePage = pathname === '/';
 
+  const resolveLinkHref = (href: string) => {
+    if (href === '/editor' && !user) {
+      return '/auth/login?redirect=/editor';
+    }
+    return href;
+  };
+
   const toggleTheme = () => {
     setTheme(effectiveTheme === 'dark' ? 'light' : 'dark');
   };
@@ -72,23 +80,29 @@ export default function Navbar() {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-12 sm:h-14">
           {/* Brand */}
-          <Link href="/" className="flex items-center gap-2.5 group" aria-label="VerbaCraft Home">
-            <div className="w-7 h-7 rounded-md bg-[var(--primary)] flex items-center justify-center text-white group-hover:bg-[var(--primary-hover)] transition-colors">
-              <FileEdit className="w-4 h-4" />
-            </div>
+          <Link href="/" className="flex items-center gap-2.5 group" aria-label="PorPor AGC Home">
+            <Image
+              src="/logo.png"
+              alt="PorPor AGC Logo"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-lg object-contain shadow-xs"
+              priority
+            />
             <span className="font-semibold text-base tracking-tight text-[var(--foreground)] sm:block">
-              VerbaCraft
+              PorPor AGC
             </span>
           </Link>
 
           {/* Desktop navigation */}
           <nav className="hidden lg:flex items-center gap-1" role="navigation" aria-label="Main navigation">
             {desktopLinks.map((link) => {
+              const targetHref = resolveLinkHref(link.href);
               const isActive = pathname === link.href || (link.href.startsWith('#') && false);
               return (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  href={targetHref}
                   className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                     isActive
                       ? 'bg-[var(--primary-light)] text-[var(--primary)]'
@@ -241,12 +255,13 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-[var(--border)] bg-[var(--background)] px-4 pb-4 space-y-1 animate-in fade-in duration-200">
           {mobileLinks.map((link) => {
+            const targetHref = resolveLinkHref(link.href);
             const isActive = pathname === link.href;
             const Icon = link.icon;
             return (
               <Link
                 key={link.href}
-                href={link.href}
+                href={targetHref}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive

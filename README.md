@@ -1,4 +1,4 @@
-# VerbaCraft — Grammar Correction Assistant
+# PorPor AGC — Grammar Correction Assistant
 
 > A modern, responsive, AI-powered writing assistance platform that detects and corrects grammar mistakes, spelling typos, punctuation errors, sentence flow issues, and adjusts writing tones with context-aware linguistic explanations.
 
@@ -6,7 +6,7 @@
 
 ## 1. Project Overview
 
-**VerbaCraft** is built as a production-ready SaaS application designed to help students, working professionals, and everyday writers refine their prose while preserving their original voice and factual content.
+**PorPor AGC** is built as a production-ready SaaS application designed to help students, working professionals, and everyday writers refine their prose while preserving their original voice and factual content.
 
 ### Key Capabilities
 - **AI Grammar Correction**: Detects and fixes subject-verb disagreement, verb tenses, missing articles, awkward prepositions, typos, and syntax errors.

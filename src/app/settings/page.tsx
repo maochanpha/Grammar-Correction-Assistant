@@ -47,6 +47,12 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/auth/login?redirect=/settings');
+    }
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
     if (user) {
       setName(user.name || '');
       if (user.preferences) {
@@ -163,7 +169,7 @@ export default function SettingsPage() {
             Configure writing preferences, appearance, and account credentials.
           </p>
           <Button asChild>
-            <Link href="/auth/login">Sign In</Link>
+            <Link href="/auth/login?redirect=/settings">Sign In</Link>
           </Button>
         </div>
       </InternalLayout>
@@ -426,7 +432,7 @@ export default function SettingsPage() {
                 Appearance
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Choose how VerbaCraft looks on your device.
+                Choose how PorPor AGC looks on your device.
               </p>
             </div>
           </div>

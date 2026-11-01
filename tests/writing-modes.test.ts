@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { MockAIProvider } from '../src/lib/ai/mock-provider';
 import { applyAllSuggestions } from '../src/lib/ai/offset-validator';
 import { WritingMode } from '../src/lib/ai/types';
+import { getActionLabel } from '../src/components/WritingEditor';
 
 const ALL_MODES: WritingMode[] = [
   'grammar_fix',
@@ -208,5 +209,18 @@ describe('Writing Mode distinctiveness and correctness (mock/offline engine)', (
     expect(gb.correctedText).toContain('colour');
     expect(gb.correctedText).toContain('centre');
     expect(us.correctedText).toBe(input);
+  });
+
+  it('maps writing modes dynamically to their corresponding action button labels', () => {
+    expect(getActionLabel('grammar_fix')).toBe('Check Grammar');
+    expect(getActionLabel('improve_writing')).toBe('Improve Writing');
+    expect(getActionLabel('professional')).toBe('Apply Professional Tone');
+    expect(getActionLabel('casual')).toBe('Apply Casual Tone');
+    expect(getActionLabel('formal')).toBe('Apply Formal Tone');
+    expect(getActionLabel('academic')).toBe('Apply Academic Tone');
+    expect(getActionLabel('friendly')).toBe('Apply Friendly Tone');
+    expect(getActionLabel('simplify')).toBe('Simplify Text');
+    expect(getActionLabel('shorten')).toBe('Shorten Text');
+    expect(getActionLabel('expand')).toBe('Expand Text');
   });
 });

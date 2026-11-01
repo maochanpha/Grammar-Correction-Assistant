@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowRight,
   CheckCircle2,
@@ -13,6 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { useAuth } from '@/context/AuthContext';
 import { WRITING_MODES } from '@/lib/ai/types';
 
 const FEATURES = [
@@ -79,6 +81,9 @@ const USERS = [
 ];
 
 export default function HomePage() {
+  const { user } = useAuth();
+  const editorHref = user ? '/editor' : '/auth/login?redirect=/editor';
+
   const [demoInput, setDemoInput] = useState(
     'I has send the report yesterday but he not reply me yet.'
   );
@@ -129,8 +134,8 @@ export default function HomePage() {
       a: 'Yes. You can switch between American English (en-US) and British English (en-GB) at any moment. The engine automatically adapts spelling (e.g., color vs. colour, organize vs. organise) and punctuation rules.',
     },
     {
-      q: 'Can I try the assistant without creating an account?',
-      a: 'Yes! Guests can use the full writing editor, run grammar corrections, and test sentence rewrites immediately without registering.',
+      q: 'Do I need an account to use the assistant?',
+      a: 'Yes, please sign in or register for a free account to access the full writing editor, grammar corrections, tone adjustments, and document history.',
     },
     {
       q: 'What are the 10 Writing Modes?',
@@ -165,7 +170,7 @@ export default function HomePage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Link
-                    href="/editor"
+                    href={editorHref}
                     className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] transition-colors"
                   >
                     <span>Start Writing</span>
@@ -254,7 +259,7 @@ export default function HomePage() {
                 See it in action
               </h2>
               <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
-                Paste or type a sentence below to see how VerbaCraft improves it.
+                Paste or type a sentence below to see how PorPor AGC improves it.
               </p>
             </div>
 
@@ -401,7 +406,7 @@ export default function HomePage() {
               {Object.values(WRITING_MODES).map((mode) => (
                 <Link
                   key={mode.id}
-                  href="/editor"
+                  href={editorHref}
                   className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 shadow-sm hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] transition-shadow flex flex-col"
                 >
                   <div className="mb-2.5">
@@ -462,10 +467,10 @@ export default function HomePage() {
                 Make every word count.
               </h2>
               <p className="text-sm text-[var(--foreground-muted)] leading-relaxed max-w-xl mx-auto mb-8">
-                Start improving your writing with VerbaCraft.
+                Start improving your writing with PorPor AGC.
               </p>
               <Link
-                href="/editor"
+                href={editorHref}
                 className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] transition-colors"
               >
                 <span>Open Writing Editor</span>
@@ -523,17 +528,21 @@ export default function HomePage() {
       {/* FOOTER */}
       <footer className="border-t border-[var(--border)] bg-[var(--background)] py-10">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[var(--primary)] flex items-center justify-center text-white">
-              <FileEdit className="w-3.5 h-3.5" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/logo.png"
+              alt="PorPor AGC Logo"
+              width={26}
+              height={26}
+              className="w-6.5 h-6.5 rounded-md object-contain shadow-xs"
+            />
             <span className="font-semibold text-sm tracking-tight text-[var(--foreground)]">
-              VerbaCraft
+              PorPor AGC
             </span>
           </div>
 
           <p className="text-xs text-[var(--foreground-muted)]">
-            © 2026 VerbaCraft. Built with Next.js, TypeScript, Tailwind CSS & Gemini AI.
+            © 2026 PorPor AGC. Built with Next.js, TypeScript, Tailwind CSS & Gemini AI.
           </p>
         </div>
       </footer>

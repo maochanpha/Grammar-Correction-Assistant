@@ -15,10 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'VerbaCraft — AI Grammar Correction Assistant & Writing Studio',
+  title: 'PorPor AGC — AI Grammar Correction Assistant & Writing Studio',
   description:
     'Detect and correct grammar mistakes, spelling typos, punctuation errors, and refine sentence tone with an intelligent, privacy-first AI writing assistant.',
   keywords: [
+    'PorPor AGC',
     'grammar checker',
     'grammar correction',
     'AI writing assistant',
@@ -27,9 +28,13 @@ export const metadata: Metadata = {
     'Flesch readability',
     'writing tool',
   ],
-  authors: [{ name: 'VerbaCraft Team' }],
+  authors: [{ name: 'PorPor AGC Team' }],
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
   openGraph: {
-    title: 'VerbaCraft — AI Grammar Correction Assistant',
+    title: 'PorPor AGC — AI Grammar Correction Assistant',
     description:
       'Elevate your writing with accurate grammar correction, tone adjustment, and detailed explanations.',
     type: 'website',

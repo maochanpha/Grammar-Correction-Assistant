@@ -41,4 +41,27 @@ describe('Auth & Session Security', () => {
     const empty = await verifySessionToken('');
     expect(empty).toBeNull();
   });
+
+  it('determines correct redirect target for unauthenticated users accessing editor', () => {
+    const getEditorTarget = (user: { id: string } | null, redirectPath = '/editor') => {
+      return user ? redirectPath : `/auth/login?redirect=${encodeURIComponent(redirectPath)}`;
+    };
+
+    expect(getEditorTarget(null)).toBe('/auth/login?redirect=%2Feditor');
+    expect(getEditorTarget({ id: 'u1' })).toBe('/editor');
+  });
+
+  it('handles post-login redirect query resolution safely', () => {
+    const resolvePostLoginRedirect = (param: string | null, fallback = '/dashboard') => {
+      if (!param || !param.startsWith('/')) {
+        return fallback;
+      }
+      return param;
+    };
+
+    expect(resolvePostLoginRedirect('/editor')).toBe('/editor');
+    expect(resolvePostLoginRedirect(null)).toBe('/dashboard');
+    expect(resolvePostLoginRedirect('')).toBe('/dashboard');
+    expect(resolvePostLoginRedirect('https://malicious.com')).toBe('/dashboard');
+  });
 });

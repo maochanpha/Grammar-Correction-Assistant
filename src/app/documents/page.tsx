@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   BookOpen,
   Search,
@@ -39,6 +40,7 @@ const SORT_OPTIONS = [
 ];
 
 export default function DocumentsPage() {
+  const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
@@ -73,6 +75,12 @@ export default function DocumentsPage() {
       setLoading(false);
     }
   }, [user, search, sortBy, order]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/auth/login?redirect=/documents');
+    }
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -163,7 +171,7 @@ export default function DocumentsPage() {
             Document history is private and tied securely to your account.
           </p>
           <Button asChild>
-            <Link href="/auth/login">Sign In</Link>
+            <Link href="/auth/login?redirect=/documents">Sign In</Link>
           </Button>
         </div>
       </InternalLayout>
@@ -195,9 +203,9 @@ export default function DocumentsPage() {
             </p>
           </div>
           <Button asChild className="shrink-0 shadow-xs">
-            <Link href="/editor">
-              <Plus className="w-4 h-4 mr-1.5" />
-              New Document
+            <Link href="/editor" className="inline-flex items-center gap-1.5 whitespace-nowrap">
+              <Plus className="w-4 h-4 shrink-0" />
+              <span>New Document</span>
             </Link>
           </Button>
         </div>
@@ -293,9 +301,9 @@ export default function DocumentsPage() {
                 : 'Create your first document to begin improving your writing.'}
             </p>
             <Button asChild size="sm" className="mt-4 shadow-xs">
-              <Link href="/editor">
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                New Document
+              <Link href="/editor" className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <Plus className="w-3.5 h-3.5 shrink-0" />
+                <span>New Document</span>
               </Link>
             </Button>
           </div>

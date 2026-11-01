@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   BookOpen,
@@ -67,9 +68,16 @@ const STAT_CARDS = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/auth/login?redirect=/dashboard');
+    }
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     if (user) {
@@ -114,7 +122,7 @@ export default function DashboardPage() {
             Track your writing metrics, documents, and historical activity in your private workspace.
           </p>
           <Button asChild>
-            <Link href="/auth/login">Sign In</Link>
+            <Link href="/auth/login?redirect=/dashboard">Sign In</Link>
           </Button>
         </div>
       </InternalLayout>
@@ -138,9 +146,9 @@ export default function DashboardPage() {
             </p>
           </div>
           <Button asChild className="shrink-0 shadow-xs">
-            <Link href="/editor">
-              <Plus className="w-4 h-4 mr-1.5" />
-              New Document
+            <Link href="/editor" className="inline-flex items-center gap-1.5 whitespace-nowrap">
+              <Plus className="w-4 h-4 shrink-0" />
+              <span>New Document</span>
             </Link>
           </Button>
         </div>
@@ -203,10 +211,10 @@ export default function DashboardPage() {
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
                   Create your first document to start polishing your writing with AI.
                 </p>
-                <Button asChild size="sm" className="mt-4">
-                  <Link href="/editor">
-                    <Plus className="w-3.5 h-3.5 mr-1" />
-                    Create Document
+                <Button asChild size="sm" className="mt-4 shadow-xs">
+                  <Link href="/editor" className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                    <Plus className="w-3.5 h-3.5 shrink-0" />
+                    <span>Create Document</span>
                   </Link>
                 </Button>
               </div>

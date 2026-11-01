@@ -45,6 +45,23 @@ interface WritingEditorProps {
 const SAMPLE_TEXT =
   "I has send the report yesterday but he not reply me yet. She don't like coffee because it is to bitter for her. We could of finished the project more better if we had more time.";
 
+export const MODE_ACTION_LABELS: Record<WritingMode, string> = {
+  grammar_fix: 'Check Grammar',
+  improve_writing: 'Improve Writing',
+  professional: 'Apply Professional Tone',
+  casual: 'Apply Casual Tone',
+  formal: 'Apply Formal Tone',
+  academic: 'Apply Academic Tone',
+  friendly: 'Apply Friendly Tone',
+  simplify: 'Simplify Text',
+  shorten: 'Shorten Text',
+  expand: 'Expand Text',
+};
+
+export function getActionLabel(selectedMode: WritingMode): string {
+  return MODE_ACTION_LABELS[selectedMode] || 'Check Grammar';
+}
+
 export default function WritingEditor({
   initialText = '',
   initialTitle = 'Untitled Writing',
@@ -635,7 +652,7 @@ export default function WritingEditor({
               ) : (
                 <>
                   <Check className="w-4 h-4 mr-1.5" />
-                  Check Grammar
+                  {getActionLabel(mode)}
                 </>
               )}
             </Button>
